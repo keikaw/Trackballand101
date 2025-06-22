@@ -1,6 +1,6 @@
-﻿;logFile := A_ScriptDir "\debug_log.txt" ; スクリプトと同じディレクトリにログファイルを作成
+﻿logFile := A_ScriptDir "\debug_log.txt" ; スクリプトと同じディレクトリにログファイルを作成
 logAdd(str) {
-	;FileAppend(str ,logFile)
+	FileAppend(str ,logFile)
 }
 
 ; ----- 定数定義 -----
@@ -135,13 +135,26 @@ MouseHookProc(nCode, wParam, lParam) {
 		sekibun_move_pos_x := 0
 		sekibun_move_pos_y := 0
 		before_time := time 
+		return 1
 	}
 	if( ( abs(sekibun_move_pos_x) + abs(sekibun_move_pos_y) ) > 200 ) {
-		;移動量の総和が50を超えたらスクロール処理を行う
+		;移動量の総和が200を超えたらスクロール処理を行う
 		SendWheelFunc(sekibun_move_pos_x,sekibun_move_pos_y, (time - before_time) )
 		;速い移動の時は同一方法のゲインを1/4程残す
-		sekibun_move_pos_x := sekibun_move_pos_x / 4
-		sekibun_move_pos_y := sekibun_move_pos_y / 4
+		if( sekibun_move_pos_x > 67138560 ) {
+			sekibun_move_pos_x := 67138560
+		} else if ( sekibun_move_pos_x < -67138560 ) {
+			sekibun_move_pos_x := -67138560
+		} else {
+			sekibun_move_pos_x := Floor(sekibun_move_pos_x / 4)
+		}
+		if( sekibun_move_pos_y > 67138560 ) {
+			sekibun_move_pos_y := 67138560
+		} else if ( sekibun_move_pos_y < -67138560 ) {
+			sekibun_move_pos_y := -67138560
+		} else {
+			sekibun_move_pos_y := Floor(sekibun_move_pos_y / 4)
+		}
 		before_time := time 
 	}
 	return 1
@@ -245,7 +258,7 @@ SendWheelFunc(x,y,mstime) {
 
 	accele := CalculateAccelerationFactor(x,y,mstime)
 
-	if ( (y==0) || (abs(x / y) > 0.6) ) {
+	if ( (y==0) || (abs(x / y) > 0.7) ) {
 		if (x > 0) {
 			logAdd("right:" . accele.times . " "  . accele.value "`n")
 			SendMsgWheelRight(accele.times,accele.value)
