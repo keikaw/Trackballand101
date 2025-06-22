@@ -1,6 +1,6 @@
-﻿logFile := A_ScriptDir "\debug_log.txt" ; スクリプトと同じディレクトリにログファイルを作成
+﻿;logFile := A_ScriptDir "\debug_log.txt" ; スクリプトと同じディレクトリにログファイルを作成
 logAdd(str) {
-	FileAppend(str ,logFile)
+	;FileAppend(str ,logFile)
 }
 
 ; ----- 定数定義 -----
@@ -130,15 +130,18 @@ MouseHookProc(nCode, wParam, lParam) {
 	sekibun_move_pos_y := sekibun_move_pos_y + movey
 	time := A_TickCount
 	if( (time - before_time) > 100 ) {
-		; 500ms経過したら
+		; 100ms経過したら
 		SendWheelFunc(movex,movey, (time - before_time) )
+		sekibun_move_pos_x := 0
+		sekibun_move_pos_y := 0
 		before_time := time 
 	}
 	if( ( abs(sekibun_move_pos_x) + abs(sekibun_move_pos_y) ) > 200 ) {
 		;移動量の総和が50を超えたらスクロール処理を行う
 		SendWheelFunc(sekibun_move_pos_x,sekibun_move_pos_y, (time - before_time) )
-		sekibun_move_pos_x := 0
-		sekibun_move_pos_y := 0
+		;速い移動の時は同一方法のゲインを1/4程残す
+		sekibun_move_pos_x := sekibun_move_pos_x / 4
+		sekibun_move_pos_y := sekibun_move_pos_y / 4
 		before_time := time 
 	}
 	return 1
@@ -199,11 +202,13 @@ XButton2:: {
 }
 
 CalculateAccelerationFactor(x,y,mstime) {
-	if ( mstime == 0 ) {
-		mstime := 1
+	if ( mstime = 0 ) {
+		absx := Floor( abs(x) * 100 )
+		absy := Floor( abs(y) * 100 )
+	} else {
+		absx := Floor( abs(x) * 100 / mstime )
+		absy := Floor( abs(y) * 100 / mstime )
 	}
-	absx := Floor( abs(x) * 100 / mstime )
-	absy := Floor( abs(y) * 100 / mstime )
 	if ( absx == 0 ) {
 		absx := 1
 	}
@@ -240,7 +245,7 @@ SendWheelFunc(x,y,mstime) {
 
 	accele := CalculateAccelerationFactor(x,y,mstime)
 
-	if ( (y==0) || abs(x / y) > 1.0 ) {
+	if ( (y==0) || (abs(x / y) > 0.6) ) {
 		if (x > 0) {
 			logAdd("right:" . accele.times . " "  . accele.value "`n")
 			SendMsgWheelRight(accele.times,accele.value)
